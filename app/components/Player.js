@@ -1,62 +1,76 @@
 // app/components/Player.js
 
-/**
- * Music Player Component
- * Handles rendering and interactions with the music player.
- */
 const Player = {
-    /**
-     * Render the player UI into the given container element.
-     * @param {HTMLElement} container - The container to render the player into.
-     * @param {Object} track - The track information to display.
-     */
-    render(container, track = null) {
-        // Clear existing content
-        container.innerHTML = '';
+    render(container, playlist = [], currentTrackIndex = 0) {
+        if (!Array.isArray(playlist) || playlist.length === 0) {
+            throw new Error('Playlist must be a non-empty array.');
+        }
 
-        // Create player container
+        // Set current track
+        let currentTrack = playlist[currentTrackIndex];
+
+        container.innerHTML = ''; // Очистка контейнера
+
         const playerContainer = document.createElement('div');
         playerContainer.className = 'player';
 
-        // Track information
+        // Track info
         const trackInfo = document.createElement('div');
         trackInfo.className = 'track-info';
 
         const trackName = document.createElement('h3');
-        trackName.textContent = track ? track.title : 'No track playing';
-
+        trackName.textContent = currentTrack ? currentTrack.title : 'No track playing';
         const artistName = document.createElement('p');
-        artistName.textContent = track ? `by ${track.artist}` : '';
+        artistName.textContent = currentTrack ? `by ${currentTrack.artist}` : '';
 
         trackInfo.appendChild(trackName);
         trackInfo.appendChild(artistName);
 
-        // Audio controls
-        const audioControls = document.createElement('div');
-        audioControls.className = 'audio-controls';
+        // Audio
+        const audio = new Audio(currentTrack.url);
+        audio.autoplay = true;
+
+        audio.onended = () => {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            Player.render(container, playlist, currentTrackIndex);
+        };
+
+        // Controls
+        const controls = document.createElement('div');
+        controls.className = 'audio-controls';
 
         const playButton = document.createElement('button');
-        playButton.textContent = 'Play';
+        playButton.textContent = 'Pause';
         playButton.onclick = () => {
-            if (audio.src && !audio.paused) {
-                audio.pause();
-                playButton.textContent = 'Play';
-            } else {
+            if (audio.paused) {
                 audio.play();
                 playButton.textContent = 'Pause';
+            } else {
+                audio.pause();
+                playButton.textContent = 'Play';
             }
         };
 
-        const audio = new Audio(track ? track.url : '');
-        audio.onended = () => {
-            playButton.textContent = 'Play';
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next';
+        nextButton.onclick = () => {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            Player.render(container, playlist, currentTrackIndex);
         };
 
-        audioControls.appendChild(playButton);
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Prev';
+        prevButton.onclick = () => {
+            currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+            Player.render(container, playlist, currentTrackIndex);
+        };
 
-        // Append elements
+        controls.appendChild(prevButton);
+        controls.appendChild(playButton);
+        controls.appendChild(nextButton);
+
         playerContainer.appendChild(trackInfo);
-        playerContainer.appendChild(audioControls);
+        playerContainer.appendChild(controls);
         container.appendChild(playerContainer);
     },
 };
