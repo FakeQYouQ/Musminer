@@ -1,73 +1,29 @@
-// app/services/api.js
-
-const API_BASE_URL = 'https://api.musicplatform.example'; // Замените на ваш URL API
-
 /**
- * Perform a GET request to the API.
- * @param {string} endpoint - The API endpoint.
- * @returns {Promise<any>} - The response data.
+ * Transfer tokens to another user.
+ * @param {string} userId - The user ID to transfer tokens to.
+ * @param {number} amount - The amount of tokens to transfer.
+ * @returns {Promise<Object>} - The response data.
  */
-export async function getRequest(endpoint) {
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`);
-        if (!response.ok) {
-            throw new Error(`API GET request failed: ${response.statusText}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('GET request error:', error);
-        throw error;
-    }
+export async function transferTokens(userId, amount) {
+    const data = { amount };
+    return await postRequest(`/users/${userId}/transfer`, data);
 }
 
 /**
- * Perform a POST request to the API.
- * @param {string} endpoint - The API endpoint.
- * @param {Object} data - The payload to send.
- * @returns {Promise<any>} - The response data.
+ * Withdraw tokens to a different account.
+ * @param {number} amount - The amount of tokens to withdraw.
+ * @returns {Promise<Object>} - The response data.
  */
-export async function postRequest(endpoint, data) {
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) {
-            throw new Error(`API POST request failed: ${response.statusText}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('POST request error:', error);
-        throw error;
-    }
+export async function withdrawTokens(amount) {
+    const data = { amount };
+    return await postRequest('/users/withdraw', data);
 }
 
 /**
- * Fetch tracks from the API.
- * @returns {Promise<Array>} - A list of tracks.
+ * Fetch user's wallet balance.
+ * @param {string} userId - The user ID to fetch the balance for.
+ * @returns {Promise<Object>} - Wallet balance data.
  */
-export async function fetchTracks() {
-    return await getRequest('/tracks');
-}
-
-/**
- * Fetch user details from the API.
- * @param {string} userId - The user ID.
- * @returns {Promise<Object>} - User details.
- */
-export async function fetchUserDetails(userId) {
-    return await getRequest(`/users/${userId}`);
-}
-
-/**
- * Update user data.
- * @param {string} userId - The user ID.
- * @param {Object} userData - The data to update.
- * @returns {Promise<Object>} - Updated user data.
- */
-export async function updateUserDetails(userId, userData) {
-    return await postRequest(`/users/${userId}`, userData);
+export async function fetchWalletBalance(userId) {
+    return await getRequest(`/users/${userId}/balance`);
 }

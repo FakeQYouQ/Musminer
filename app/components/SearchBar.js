@@ -2,7 +2,7 @@
 
 /**
  * Search Bar Component
- * Provides a search input and triggers a callback on search.
+ * Provides a search input, triggers a callback on search, and includes advanced features.
  */
 const SearchBar = {
     /**
@@ -11,29 +11,42 @@ const SearchBar = {
      * @param {Function} onSearch - Callback function to handle search input.
      */
     render(container, onSearch) {
-        // Clear existing content
-        container.innerHTML = '';
+        container.innerHTML = ''; // Очистка контейнера
 
-        // Create search bar container
         const searchBarContainer = document.createElement('div');
         searchBarContainer.className = 'search-bar';
 
-        // Create search input
+        // Поле ввода
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = 'Search for tracks or artists...';
+        searchInput.placeholder = 'Ищите треки, исполнителей...';
         searchInput.className = 'search-input';
 
-        // Handle input changes
-        searchInput.addEventListener('input', (event) => {
+        // Кнопка очистки
+        const clearButton = document.createElement('button');
+        clearButton.textContent = 'Очистить';
+        clearButton.className = 'clear-button';
+        clearButton.onclick = () => {
+            searchInput.value = '';
+            if (onSearch) onSearch('');
+        };
+
+        // Обработка ввода текста
+        searchInput.addEventListener('input', async (event) => {
             const query = event.target.value.trim();
-            if (onSearch && typeof onSearch === 'function') {
-                onSearch(query);
+            if (onSearch) onSearch(query);
+        });
+
+        // Поиск по Enter
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && onSearch) {
+                onSearch(searchInput.value.trim());
             }
         });
 
-        // Append input to container
+        // Добавляем элементы
         searchBarContainer.appendChild(searchInput);
+        searchBarContainer.appendChild(clearButton);
         container.appendChild(searchBarContainer);
     },
 };

@@ -3,6 +3,8 @@
 // Import necessary modules
 import { initTelegramApp } from './telegramBot';
 import MainPage from './pages/MainPage';
+import WalletPage from './pages/WalletPage'; // New WalletPage
+import { getRequest } from './services/api'; // For fetching data like balance
 
 // Initialize Telegram Web App
 const tg = initTelegramApp();
@@ -25,8 +27,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tg.MainButton.onClick(() => {
         alert('Main Button clicked!');
-        // Add further navigation or logic here
+        // Navigation to Wallet page
+        renderWalletPage(appContainer);
     });
 
     console.log('Telegram Mini App initialized successfully.');
 });
+
+// New function to render Wallet Page
+async function renderWalletPage(container) {
+    const userId = 'user123'; // Replace with actual user ID
+
+    try {
+        const walletData = await getRequest(`/users/${userId}/wallet`);
+        container.innerHTML = ''; // Clear current content
+        WalletPage.render(container, walletData); // Render Wallet Page with data
+    } catch (error) {
+        console.error('Error fetching wallet data:', error);
+    }
+}

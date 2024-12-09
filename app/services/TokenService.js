@@ -1,22 +1,12 @@
-// app/services/tokenService.js
-
-const DAILY_EARNING_LIMIT = 21600; // 6 часов в секундах
-const TRACK_LIMIT = 3; // Максимум 3 начисления токенов за трек в день
-
-const tokenData = {
-    totalEarned: 0,
-    dailyTimeSpent: 0,
-    trackPlays: {}, // Счётчик прослушиваний треков: { trackId: count }
-};
-
 /**
  * Earn tokens for a track and distribute between listener, artist, and platform.
  * @param {string} trackId - The ID of the track.
  * @param {number} trackDuration - Duration of the track in seconds.
  * @param {string} artistId - The ID of the artist.
+ * @param {string} userId - The ID of the listener.
  * @returns {string} - Message indicating success or failure.
  */
-export function earnTokens(trackId, trackDuration, artistId) {
+export async function earnTokens(trackId, trackDuration, artistId, userId) {
     if (trackDuration < 60) {
         return 'Track duration is too short to earn tokens.';
     }
@@ -42,11 +32,29 @@ export function earnTokens(trackId, trackDuration, artistId) {
     tokenData.dailyTimeSpent += trackDuration;
     tokenData.trackPlays[trackId] += 1;
 
+    // Add token transaction to user's wallet
+    await addTransaction(userId, listenerReward);
+
     console.log(`Listener earned ${listenerReward} tokens.`);
     console.log(`Artist ${artistId} earned ${artistReward} tokens.`);
     console.log(`Platform earned ${platformReward} tokens.`);
 
     return `Earned ${listenerReward} tokens for track ${trackId}.`;
+}
+
+/**
+ * Add token transaction to user's wallet
+ * @param {string} userId - The user ID.
+ * @param {number} amount - The amount of tokens earned.
+ */
+async function addTransaction(userId, amount) {
+    const data = {
+        userId,
+        amount,
+        type: 'earned',
+        date: new Date().toISOString(),
+    };
+    await postRequest(`/users/${userId}/transactions`, data);
 }
 
 /**

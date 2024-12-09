@@ -11,8 +11,9 @@ const TrackCard = {
      * @param {Object} track - The track data to display.
      * @param {Function} onPlay - Callback function for playing the track.
      * @param {Function} onFavorite - Callback function for adding the track to favorites.
+     * @param {Function} onAddToPlaylist - Callback function for adding track to playlist.
      */
-    render(container, track, onPlay, onFavorite) {
+    render(container, track, onPlay, onFavorite, onAddToPlaylist) {
         // Create card container
         const card = document.createElement('div');
         card.className = 'track-card';
@@ -33,8 +34,12 @@ const TrackCard = {
         const trackArtist = document.createElement('p');
         trackArtist.textContent = `by ${track.artist}`;
 
+        const trackRating = document.createElement('p');
+        trackRating.textContent = `Rating: ${track.rating || 'N/A'}`;
+
         trackInfo.appendChild(trackTitle);
         trackInfo.appendChild(trackArtist);
+        trackInfo.appendChild(trackRating);
 
         // Action buttons
         const actions = document.createElement('div');
@@ -48,8 +53,13 @@ const TrackCard = {
         favoriteButton.textContent = 'Favorite';
         favoriteButton.onclick = () => onFavorite(track);
 
+        const addToPlaylistButton = document.createElement('button');
+        addToPlaylistButton.textContent = 'Add to Playlist';
+        addToPlaylistButton.onclick = () => onAddToPlaylist(track);
+
         actions.appendChild(playButton);
         actions.appendChild(favoriteButton);
+        actions.appendChild(addToPlaylistButton);
 
         // Assemble card
         card.appendChild(trackImage);
