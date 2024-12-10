@@ -10,9 +10,8 @@ const Wallet = {
      * @param {HTMLElement} container - The container to render the wallet into.
      * @param {Object} walletData - The wallet data containing balance and transactions.
      * @param {Function} onTransfer - Callback function to handle token transfers.
-     * @param {Function} onWithdraw - Callback function to handle withdrawal.
      */
-    render(container, walletData = { balance: 0, transactions: [] }, onTransfer, onWithdraw) {
+    render(container, walletData = { balance: 0, transactions: [] }, onTransfer) {
         // Clear existing content
         container.innerHTML = '';
 
@@ -22,22 +21,29 @@ const Wallet = {
 
         // Balance display
         const balanceDisplay = document.createElement('h3');
-        balanceDisplay.textContent = `Your Balance: ${walletData.balance} Tokens`;
+        balanceDisplay.textContent = `Your Balance: ${walletData.balance.toFixed(2)} Tokens`;
 
-        // Transaction actions
+        // Transfer action
         const transferButton = document.createElement('button');
         transferButton.textContent = 'Transfer Tokens';
         transferButton.onclick = () => {
-            const amount = prompt("Enter the amount to transfer:");
+            const amount = parseFloat(prompt('Enter the amount to transfer:'));
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid positive number.');
+                return;
+            }
             onTransfer(amount);
         };
 
+        // Withdraw action
         const withdrawButton = document.createElement('button');
-        withdrawButton.textContent = 'Withdraw';
-        withdrawButton.onclick = () => {
-            const amount = prompt("Enter the amount to withdraw:");
-            onWithdraw(amount);
-        };
+        withdrawButton.textContent = walletData.withdrawEnabled
+            ? 'Withdraw Tokens'
+            : 'Withdraw (Unavailable)';
+        withdrawButton.disabled = !walletData.withdrawEnabled;
+        withdrawButton.title = walletData.withdrawEnabled
+            ? 'Withdraw your tokens to your wallet.'
+            : 'Withdrawals will be available after listing.';
 
         // Transactions list
         const transactionsList = document.createElement('div');
@@ -46,24 +52,17 @@ const Wallet = {
         const transactionsTitle = document.createElement('h4');
         transactionsTitle.textContent = 'Transaction History';
 
-        const transactionItems = walletData.transactions.map((transaction) => {
-            const item = document.createElement('p');
-            item.textContent = `${transaction.date}: ${transaction.amount} Tokens (${transaction.type})`;
-            return item;
-        });
-
-        transactionsList.appendChild(transactionsTitle);
-        transactionItems.forEach((item) => transactionsList.appendChild(item));
+        if (walletData.transactions.length === 0) {
+            const noTransactionsMessage = document.createElement('p');
+            noTransactionsMessage.textContent = 'No transactions yet.';
+            transactionsList.appendChild(noTransactionsMessage);
+        } else {
+            walletData.transactions.forEach((transaction) => {
+                const item = document.createElement('p');
+                item.textContent = `${transaction.date}: ${transaction.amount} Tokens (${transaction.type})`;
+                transactionsList.appendChild(item);
+            });
+        }
 
         // Append elements to wallet container
         walletContainer.appendChild(balanceDisplay);
-        walletContainer.appendChild(transferButton);
-        walletContainer.appendChild(withdrawButton);
-        walletContainer.appendChild(transactionsList);
-
-        // Append wallet container to the given container
-        container.appendChild(walletContainer);
-    },
-};
-
-export default Wallet;

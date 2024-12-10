@@ -1,66 +1,97 @@
+// app/services/telegramWallet.js
+
 /**
- * Earn tokens for a track and distribute between listener, artist, and platform.
- * @param {string} trackId - The ID of the track.
- * @param {number} trackDuration - Duration of the track in seconds.
- * @param {string} artistId - The ID of the artist.
- * @param {string} userId - The ID of the listener.
- * @returns {string} - Message indicating success or failure.
+ * Telegram Wallet Integration for TON Blockchain
+ * Handles interaction with Telegram Wallet for TON payments, subscriptions, and token presale.
  */
-export async function earnTokens(trackId, trackDuration, artistId, userId) {
-    if (trackDuration < 60) {
-        return 'Track duration is too short to earn tokens.';
-    }
 
-    if (tokenData.dailyTimeSpent >= DAILY_EARNING_LIMIT) {
-        return 'Daily earning limit reached. You can still listen to the track without earning tokens.';
-    }
-
-    if (!tokenData.trackPlays[trackId]) {
-        tokenData.trackPlays[trackId] = 0;
-    }
-
-    if (tokenData.trackPlays[trackId] >= TRACK_LIMIT) {
-        return `You have already earned tokens for ${TRACK_LIMIT} plays of this track today. Feel free to listen more!`;
-    }
-
-    // Распределение токенов
-    const listenerReward = 0.01;
-    const artistReward = 0.001;
-    const platformReward = 0.0001;
-
-    tokenData.totalEarned += listenerReward;
-    tokenData.dailyTimeSpent += trackDuration;
-    tokenData.trackPlays[trackId] += 1;
-
-    // Add token transaction to user's wallet
-    await addTransaction(userId, listenerReward);
-
-    console.log(`Listener earned ${listenerReward} tokens.`);
-    console.log(`Artist ${artistId} earned ${artistReward} tokens.`);
-    console.log(`Platform earned ${platformReward} tokens.`);
-
-    return `Earned ${listenerReward} tokens for track ${trackId}.`;
+/**
+ * Check if Telegram Wallet is available.
+ * @returns {boolean} - True if available, false otherwise.
+ */
+export function isTelegramWalletAvailable() {
+    return typeof Telegram !== 'undefined' &&
+           Telegram.WebApp?.initDataUnsafe?.user;
 }
 
 /**
- * Add token transaction to user's wallet
- * @param {string} userId - The user ID.
- * @param {number} amount - The amount of tokens earned.
+ * Get user wallet details from Telegram.
+ * @returns {Object|null} - Wallet details or null if unavailable.
  */
-async function addTransaction(userId, amount) {
-    const data = {
-        userId,
-        amount,
-        type: 'earned',
-        date: new Date().toISOString(),
+export function getTelegramWalletDetails() {
+    if (!isTelegramWalletAvailable()) {
+        console.error('Telegram Wallet is not available.');
+        return null;
+    }
+
+    const user = Telegram.WebApp.initDataUnsafe.user;
+    return {
+        id: user.id,
+        username: user.username,
+        walletAddress: `ton://transfer/${user.id}?amount=0&text=YourMessageHere`, // Example TON link
     };
-    await postRequest(`/users/${userId}/transactions`, data);
 }
 
 /**
- * Reset daily limits (simulate daily reset).
+ * Check if token withdrawal is allowed (Music token is locked until listing).
+ * @returns {boolean} - False until listing.
  */
-export function resetDailyLimits() {
-    tokenData.dailyTimeSpent = 0;
-    tokenData.trackPlays = {};
+export function canWithdrawTokens() {
+    console.log('Token withdrawals are disabled until the Music token is listed on the exchange.');
+    return false; // Withdrawal is locked
+}
+
+/**
+ * Request a token withdrawal (disabled before listing).
+ * @param {number} amount - The amount of tokens to withdraw.
+ * @returns {string} - Message indicating withdrawal status.
+ */
+export function requestTokenWithdrawal(amount) {
+    if (!canWithdrawTokens()) {
+        return 'Token withdrawals are currently disabled until the Music token is listed.';
+    }
+
+    if (amount <= 0) {
+        return 'Invalid withdrawal amount.';
+    }
+
+    // Placeholder logic for withdrawals post-listing
+    return `Requested withdrawal of ${amount} tokens.`;
+}
+
+/**
+ * Generate a TON deposit link for wallet top-up (used for subscription or presale).
+ * @param {number} tonAmount - The amount of TON to deposit.
+ * @returns {string} - Generated TON payment link.
+ */
+export function generateTonDepositLink(tonAmount) {
+    if (tonAmount <= 0) {
+        return 'Invalid TON amount. Please enter a positive number.';
+    }
+
+    // Replace `platform_wallet_address` with your platform's TON wallet address
+    const platformWalletAddress = 'EQC1234...'; // Example address
+    const depositLink = `ton://transfer/${platformWalletAddress}?amount=${tonAmount}&text=SubscriptionOrPresale`;
+
+    console.log(`Generated TON deposit link: ${depositLink}`);
+    return depositLink;
+}
+
+/**
+ * Process subscription or token presale purchase.
+ * @param {number} tonAmount - The amount of TON sent for the transaction.
+ * @returns {string} - Message indicating transaction status.
+ */
+export function processPresalePurchase(tonAmount) {
+    if (!isTelegramWalletAvailable()) {
+        return 'Telegram Wallet is not available.';
+    }
+
+    if (tonAmount <= 0) {
+        return 'Invalid TON amount for purchase.';
+    }
+
+    // Logic to validate and process TON transaction (requires TON API integration)
+    console.log(`Processing presale purchase for ${tonAmount} TON.`);
+    return `Presale purchase for ${tonAmount} TON is being processed.`;
 }
