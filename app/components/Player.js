@@ -1,77 +1,95 @@
-// app/components/Player.js
+import { performTrackPlay, addTrackToFavorites } from '../services/api.js';
 
 const Player = {
-    render(container, playlist = [], currentTrackIndex = 0) {
+    async render(container, playlist = [], currentTrackIndex = 0, userId) {
         if (!Array.isArray(playlist) || playlist.length === 0) {
             throw new Error('Playlist must be a non-empty array.');
         }
 
-        // Set current track
-        let currentTrack = playlist[currentTrackIndex];
+        container.innerHTML = '';
+        currentTrackIndex = (currentTrackIndex + playlist.length) % playlist.length;
+        const currentTrack = playlist[currentTrackIndex];
 
-        container.innerHTML = ''; // Очистка контейнера
+        if (!currentTrack || !currentTrack.url) {
+            throw new Error('Invalid track data.');
+        }
 
         const playerContainer = document.createElement('div');
         playerContainer.className = 'player';
 
-        // Track info
         const trackInfo = document.createElement('div');
         trackInfo.className = 'track-info';
+        trackInfo.innerHTML = `
+            <h3>${currentTrack.title || 'Unknown Track'}</h3>
+            <p>${currentTrack.artist || ''}</p>
+        `;
 
-        const trackName = document.createElement('h3');
-        trackName.textContent = currentTrack ? currentTrack.title : 'No track playing';
-        const artistName = document.createElement('p');
-        artistName.textContent = currentTrack ? `by ${currentTrack.artist}` : '';
-
-        trackInfo.appendChild(trackName);
-        trackInfo.appendChild(artistName);
-
-        // Audio
         const audio = new Audio(currentTrack.url);
         audio.autoplay = true;
 
-        audio.onended = () => {
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            Player.render(container, playlist, currentTrackIndex);
-        };
-
-        // Controls
         const controls = document.createElement('div');
         controls.className = 'audio-controls';
 
-        const playButton = document.createElement('button');
-        playButton.textContent = 'Pause';
-        playButton.onclick = () => {
+        const playPauseButton = this.createButton('Pause', () => {
             if (audio.paused) {
                 audio.play();
-                playButton.textContent = 'Pause';
+                playPauseButton.textContent = 'Pause';
             } else {
                 audio.pause();
-                playButton.textContent = 'Play';
+                playPauseButton.textContent = 'Play';
             }
-        };
+        });
 
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Next';
-        nextButton.onclick = () => {
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            Player.render(container, playlist, currentTrackIndex);
-        };
+        controls.appendChild(this.createButton('Prev', async () => {
+            await this.switchTrack(-1, playlist, userId, container, currentTrackIndex);
+        }));
 
-        const prevButton = document.createElement('button');
-        prevButton.textContent = 'Prev';
-        prevButton.onclick = () => {
-            currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-            Player.render(container, playlist, currentTrackIndex);
-        };
+        controls.appendChild(playPauseButton);
 
-        controls.appendChild(prevButton);
-        controls.appendChild(playButton);
-        controls.appendChild(nextButton);
+        controls.appendChild(this.createButton('Next', async () => {
+            await this.switchTrack(1, playlist, userId, container, currentTrackIndex);
+        }));
+
+        controls.appendChild(this.createButton('Лайк', async () => {
+            try {
+                await addTrackToFavorites(currentTrack.id, userId);
+                alert(`Трек "${currentTrack.title}" добавлен в избранное.`);
+            } catch (error) {
+                console.error('Ошибка добавления в избранное:', error);
+            }
+        }));
+
+        audio.onended = async () => {
+            await this.switchTrack(1, playlist, userId, container, currentTrackIndex);
+        };
 
         playerContainer.appendChild(trackInfo);
         playerContainer.appendChild(controls);
+
         container.appendChild(playerContainer);
+
+        await this.playTrack(currentTrack, userId);
+    },
+
+    createButton(text, onClick) {
+        const button = document.createElement('button');
+        button.textContent = text;
+        button.onclick = onClick;
+        return button;
+    },
+
+    async switchTrack(direction, playlist, userId, container, currentTrackIndex) {
+        currentTrackIndex = (currentTrackIndex + direction + playlist.length) % playlist.length;
+        await this.render(container, playlist, currentTrackIndex, userId);
+    },
+
+    async playTrack(track, userId) {
+        try {
+            await performTrackPlay(track.id, userId);
+            console.log(`Track played: ${track.title}`);
+        } catch (error) {
+            console.error('Error playing track:', error);
+        }
     },
 };
 

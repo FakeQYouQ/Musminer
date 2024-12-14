@@ -1,3 +1,5 @@
+// backend/models/user.js
+
 import { DataTypes } from 'sequelize';
 import sequelize from './index.js';
 import Track from './track.js';
@@ -11,7 +13,7 @@ const User = sequelize.define('User', {
     username: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true, // Уникальные имена пользователей
+        unique: true,
     },
     balance: {
         type: DataTypes.FLOAT,
@@ -23,10 +25,21 @@ const User = sequelize.define('User', {
     },
     dailyListeningTime: {
         type: DataTypes.INTEGER,
-        defaultValue: 0, // Время прослушивания в секундах за день
+        defaultValue: 0,
     },
-},
- {
+    role: {
+        type: DataTypes.ENUM('user', 'artist', 'label', 'admin'),
+        defaultValue: 'user',
+    },
+    isBanned: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+    telegramChatId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+}, {
     timestamps: true,
 });
 

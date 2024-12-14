@@ -1,32 +1,13 @@
 import fetch from 'node-fetch';
 
 /**
- * Initialize the Telegram Web App instance
- */
-export function initTelegramApp() {
-    if (typeof Telegram === 'undefined' || !Telegram.WebApp) {
-        console.error('Telegram Web App API not available.');
-        return null;
-    }
-
-    const tg = Telegram.WebApp;
-
-    tg.expand(); // Expand the web app to fullscreen
-    tg.MainButton.hide(); // Hide the main button initially
-    tg.HapticFeedback.enabled = true; // Enable haptic feedback
-
-    console.log('Telegram Web App initialized.');
-    return tg;
-}
-
-/**
- * Send a Telegram notification
- * @param {string} chatId - Telegram chat ID
- * @param {string} message - Notification message
+ * Отправить сообщение через Telegram Bot API
+ * @param {string} chatId - ID чата Telegram
+ * @param {string} message - Текст сообщения
  * @returns {Promise<void>}
  */
 export async function sendTelegramMessage(chatId, message) {
-    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Add your bot token here
+    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
     if (!TELEGRAM_BOT_TOKEN) {
         throw new Error('Telegram bot token is not defined in the environment.');

@@ -1,48 +1,56 @@
-// app/index.js
-
-// Import necessary modules
 import { initTelegramApp } from './telegramBot';
 import MainPage from './pages/MainPage';
-import WalletPage from './pages/WalletPage'; // New WalletPage
-import { getRequest } from './services/api'; // For fetching data like balance
+import WalletPage from './pages/WalletPage';
+import { getRequest } from './services/api';
 
-// Initialize Telegram Web App
+// Инициализация Telegram WebApp
 const tg = initTelegramApp();
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Set up basic app structure
+document.addEventListener('DOMContentLoaded', async () => {
     const appContainer = document.getElementById('app');
-
     if (!appContainer) {
-        console.error('App container not found! Make sure to include an element with id "app" in your HTML.');
+        console.error('App container not found! Ensure you have an element with id "app" in your HTML.');
         return;
     }
 
-    // Render Main Page
-    MainPage.render(appContainer);
+    // Получение данных пользователя из Telegram WebApp
+    const telegramUser = tg.initDataUnsafe.user || null;
+    if (!telegramUser) {
+        alert('User data not available. Please open the app through Telegram.');
+        return;
+    }
 
-    // Example interaction: Update Telegram Web App title
-    tg.MainButton.text = 'Start Listening';
+    const userId = telegramUser.id;
+    const username = telegramUser.username || 'Guest';
+
+    const usernameElement = document.getElementById('username');
+    if (usernameElement) {
+        usernameElement.textContent = `Welcome, ${username}!`;
+    } else {
+        console.warn('Username element not found.');
+    }
+
+    // Рендер главной страницы
+    MainPage.render(appContainer, userId);
+
+    // Настройка главной кнопки Telegram
+    tg.MainButton.text = 'Open Wallet';
     tg.MainButton.show();
 
     tg.MainButton.onClick(() => {
-        alert('Main Button clicked!');
-        // Navigation to Wallet page
-        renderWalletPage(appContainer);
+        tg.MainButton.hide();
+        renderWalletPage(appContainer, userId);
     });
-
-    console.log('Telegram Mini App initialized successfully.');
 });
 
-// New function to render Wallet Page
-async function renderWalletPage(container) {
-    const userId = 'user123'; // Replace with actual user ID
-
+// Функция для рендера страницы кошелька
+async function renderWalletPage(container, userId) {
     try {
         const walletData = await getRequest(`/users/${userId}/wallet`);
-        container.innerHTML = ''; // Clear current content
-        WalletPage.render(container, walletData); // Render Wallet Page with data
+        container.innerHTML = ''; // Очистка текущего контента
+        WalletPage.render(container, walletData);
     } catch (error) {
         console.error('Error fetching wallet data:', error);
+        container.innerHTML = '<p>Error loading wallet data. Please try again later.</p>';
     }
 }
